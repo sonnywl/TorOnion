@@ -12,7 +12,11 @@ var hops : int = 3;
 var minPath : int = 3;
 private var next : int = 0;
 
-// Time
+// Timekeeping
+var tcount : int;
+var startTime : float; // not sure if keeping stopwatch yet
+var textTime : String;
+var seconds : int;
 var delayTime:int= 3;
 var messageSpeed:int = 6;
 private var currDelayTime :int;
@@ -27,8 +31,9 @@ private var cli 	: GameObject;
 private var recip	: GameObject;
 private var message	: GameObject;
 private var arrived	: boolean;
+private var rewind : boolean;
 
-private enum MessageStates {CLIENT, NODE, RECIPENT};
+private enum MessageStates {CLIENT, NODE, RECIPENT, RESTART};
 private var messageState : MessageStates;
 
 function Awake() {
@@ -54,6 +59,8 @@ function Awake() {
 		colors[i] = new Color(1.0, (1.0 - 1.0/c), 0, 1);
 		c--;
 	}
+	// start timer
+	startTime = Time.time;
 	
 	currDelayTime = delayTime;
 	messageState = MessageStates.NODE;
@@ -116,15 +123,32 @@ function FixedUpdate () {
 			break;
 		case MessageStates.CLIENT:
 			message.transform.LookAt(cli.transform);
+			messageState = MessageStates.RESTART;
 			break;
 		case MessageStates.RECIPENT:
 			message.transform.LookAt(recip.transform);
-			if(controller.getCollisionTarget().Equals(recip.name)){
-				if(DelayMessage()){
+			if (controller.getCollisionTarget().Equals(recip.name)) {
+				if (DelayMessage()) {
 					messageState = MessageStates.NODE;
 					next--;
 					arrived = true;
 				}
+			}
+			break;
+		case MessageStates.RESTART:
+			if (controller.getCollisionTarget().Equals("Client")) {
+				tcount++;
+				if (tcount >= 3) {
+					SetNewGuardPath();
+					SelectGuards(guardCount);
+					SelectPath(hops);
+					Debug.Log("Node Path " + order.toString());
+					startTime = Time.time;
+					tcount = 0;
+				} else {
+					SetNewPath();
+				}
+				messageState = MessageStates.NODE;
 			}
 			break;
 	}
@@ -167,7 +191,10 @@ function SelectPath (hops : int): void {
 	}
 }
 
-function clearPath () {
+function SetNewGuardPath () {
+	arrived = false;
+	next = 0;
+	hops = 3;
 	for (item in ghash.Keys) {
 		var guard = GameObject.Find("Node"+item);
 		guard.renderer.material.color = Color.white;
@@ -175,6 +202,17 @@ function clearPath () {
 	ghash.Clear();
 	nhash.Clear();
 	order.Clear();
+}
+
+function SetNewPath () {
+	arrived = false;
+	next = 0;
+	hops = 3;
+	nhash.Clear();
+	for (var i:int = 1; i < order.length; i++) {
+		order.RemoveAt(i);
+	}
+	SelectPath(hops);
 }
 
 function DelayMessage(): boolean {
@@ -187,15 +225,24 @@ function DelayMessage(): boolean {
 }
 
 function OnGUI() {
-	if (GUI.Button(Rect(Screen.width - 200,Screen.height- 50,100,40),"Play Again")) {
-		arrived = false;
-		next = 0;
-		hops = 3;
+	SetTimer();
+	
+	// play again button
+	if (GUI.Button(Rect(Screen.width - 100,Screen.height - 50,80,40),"Play Again")) {
 		// select new guard nodes and new path
-		clearPath();
+		SetNewGuardPath();
 		SelectGuards(guardCount);
 		SelectPath(hops);
 		Debug.Log("Node Path " + order.toString());
+		startTime = Time.time;
 		messageState = MessageStates.NODE;
 	}
+}
+
+function SetTimer () {
+	// timer
+	var guiTime = Time.time - startTime;
+	var seconds : int = guiTime % 60;
+	textTime = String.Format(":{0:00}", seconds);
+	GUI.Label(Rect(Screen.width - 147 , Screen.height - 40,80,40), textTime);
 }
