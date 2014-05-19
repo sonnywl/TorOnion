@@ -14,7 +14,7 @@ private var next : int = 0;
 
 // Time
 var delayTime:int= 3;
-var messageSpeed:int = 7;
+var messageSpeed:int = 6;
 private var currDelayTime :int;
 
 private var ghash = new Hashtable();
@@ -46,13 +46,15 @@ function Awake() {
 	cli.name = "Client";
 	recip.name = "Recip";
 	message.name = "Message";
+	
+	// set colors
 	colors = new Color[hops];
+	var c = hops;
 	for(var i:int = 0; i < hops; i++) {
-		colors[i] = new Color(Random.value,Random.value,Random.value, 1);
+		colors[i] = new Color(1.0, (1.0 - 1.0/c), 0, 1);
+		c--;
 	}
-	colors[0] = Color.green;
-	colors[1] = Color.cyan;
-	colors[2] = Color.yellow;	
+	
 	currDelayTime = delayTime;
 	messageState = MessageStates.NODE;
 }
@@ -149,11 +151,8 @@ function SelectGuards (guardCount : int): void {
 	}
 	//Debug.Log("Guard node count: " + ghash.Count);	
 	for (item in ghash.Keys) {
-		//Debug.Log(item);
 		var guard = GameObject.Find("Node"+item);
 		guard.renderer.material.color = Color.blue;
-		//guard.renderer.material.shader = Shader.Find("Specular");
-		//guard.renderer.material.SetColor("_SpecColor", Color.blue);
 	}
 }
 
@@ -168,6 +167,16 @@ function SelectPath (hops : int): void {
 	}
 }
 
+function clearPath () {
+	for (item in ghash.Keys) {
+		var guard = GameObject.Find("Node"+item);
+		guard.renderer.material.color = Color.white;
+	}
+	ghash.Clear();
+	nhash.Clear();
+	order.Clear();
+}
+
 function DelayMessage(): boolean {
 	if(currDelayTime <= 0) {
 		currDelayTime = delayTime;
@@ -178,8 +187,15 @@ function DelayMessage(): boolean {
 }
 
 function OnGUI() {
-	if(GUI.Button(Rect(Screen.width - 200,Screen.height- 50,100,40),"Play Again"))
-	{
-		// Need to reset message state
+	if (GUI.Button(Rect(Screen.width - 200,Screen.height- 50,100,40),"Play Again")) {
+		arrived = false;
+		next = 0;
+		hops = 3;
+		// select new guard nodes and new path
+		clearPath();
+		SelectGuards(guardCount);
+		SelectPath(hops);
+		Debug.Log("Node Path " + order.toString());
+		messageState = MessageStates.NODE;
 	}
 }
