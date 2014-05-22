@@ -6,10 +6,10 @@ var capsule : GameObject;
 
 // selecting guard nodes
 var guardCount : int = 3;
-var ncount : int = 8;
+var ncount : int = 11;
 // path
-var hops : int = 3;
-var minPath : int = 3;
+var hops : int = 5;
+var minPath : int = 5;
 private var next : int = 0;
 
 // Timekeeping
@@ -56,7 +56,7 @@ function Awake() {
 	colors = new Color[hops];
 	var c = hops;
 	for(var i:int = 0; i < hops; i++) {
-		colors[i] = new Color(1.0, (1.0 - 1.0/c), 0, 1);
+		colors[i] = new Color(1.0, (1.0 - 1.0/c), (1.0 - 1.0/c), 1);
 		c--;
 	}
 	// start timer
@@ -194,7 +194,7 @@ function SelectPath (hops : int): void {
 function SetNewGuardPath () {
 	arrived = false;
 	next = 0;
-	hops = 3;
+	hops = minPath;
 	for (item in ghash.Keys) {
 		var guard = GameObject.Find("Node"+item);
 		guard.renderer.material.color = Color.white;
@@ -207,7 +207,7 @@ function SetNewGuardPath () {
 function SetNewPath () {
 	arrived = false;
 	next = 0;
-	hops = 3;
+	hops = minPath;
 	nhash.Clear();
 	for (var i:int = 1; i < order.length; i++) {
 		order.RemoveAt(i);
