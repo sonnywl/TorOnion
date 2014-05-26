@@ -233,6 +233,8 @@ function OnGUI() {
 		SetNewGuardPath();
 		SelectGuards(guardCount);
 		SelectPath(hops);
+		// reset position of message
+		message.transform.position = Vector3(cli.transform.position.x, cli.transform.position.y, cli.transform.position.z);
 		Debug.Log("Node Path " + order.toString());
 		startTime = Time.time;
 		messageState = MessageStates.NODE;
