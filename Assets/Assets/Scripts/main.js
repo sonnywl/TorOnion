@@ -72,12 +72,21 @@ function Start () {
 		var clone:GameObject = Instantiate(
 			node,  
 			Vector3 (
+				Random.Range(-7, 7) + camPos.x, 
+				3, 
+				Random.Range(-7, 7) + camPos.z
+			), 
+			Quaternion.identity
+		);
+		/*var clone:GameObject = Instantiate(
+			node,  
+			Vector3 (
 				Random.Range(-Random.value*7, Random.value*7) + camPos.x, 
 				3, 
 				Random.Range(-Random.value*7, Random.value*7) + camPos.z
 			), 
 			Quaternion.identity
-		);
+		);*/
 		clone.name = "Node"+i;
 	}
 	// select guard nodes
