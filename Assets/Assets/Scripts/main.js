@@ -51,7 +51,6 @@ function Awake() {
 	cli.name = "Client";
 	recip.name = "Recip";
 	message.name = "Message";
-	
 	// set colors
 	colors = new Color[hops];
 	var c = hops;
@@ -78,21 +77,14 @@ function Start () {
 			), 
 			Quaternion.identity
 		);
-		/*var clone:GameObject = Instantiate(
-			node,  
-			Vector3 (
-				Random.Range(-Random.value*7, Random.value*7) + camPos.x, 
-				3, 
-				Random.Range(-Random.value*7, Random.value*7) + camPos.z
-			), 
-			Quaternion.identity
-		);*/
 		clone.name = "Node"+i;
 	}
 	// select guard nodes
 	SelectGuards(guardCount);
 	// create path
 	SelectPath(hops);
+	var controller : MessageController = message.GetComponent(MessageController);
+	controller.setNodePath(order);
 	Debug.Log("Node Path " + order.toString());
 }
 
@@ -126,6 +118,7 @@ function FixedUpdate () {
 				} 
 				if(hops == 0 || next >= order.length - 1) {
 					messageState = MessageStates.RECIPENT;
+					message.renderer.material.color = Color.white;
 				}
 			}
 			message.transform.LookAt(endpoint.transform);
