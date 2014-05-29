@@ -240,6 +240,8 @@ function OnGUI() {
 		Debug.Log("Node Path " + order.toString());
 		startTime = Time.time;
 		messageState = MessageStates.NODE;
+		var controller : MessageController = message.GetComponent(MessageController);
+		controller.setNodePath(order);
 	}
 }
 
