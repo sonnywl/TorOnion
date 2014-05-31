@@ -41,7 +41,9 @@ function Awake() {
 	camPos = this.camera.transform.position;
 	// instantiate client and recipient
 	cli = Instantiate(client, Vector3(camPos.x - 10f, 3, camPos.z), Quaternion.identity);
+	cli.renderer.material.color = Color.cyan;
 	recip = Instantiate(client, Vector3(camPos.x + 10f, 3, camPos.z), Quaternion.identity);
+	recip.renderer.material.color = Color.green;
 	// instantiate message to clients position
 	message = Instantiate (
 		capsule, 
@@ -53,10 +55,10 @@ function Awake() {
 	message.name = "Message";
 	// set colors
 	colors = new Color[hops];
-	var c = hops;
+	var c = 1;
 	for(var i:int = 0; i < hops; i++) {
 		colors[i] = new Color(1.0, (1.0 - 1.0/c), (1.0 - 1.0/c), 1);
-		c--;
+		c++;
 	}
 	// start timer
 	startTime = Time.time;
@@ -243,6 +245,18 @@ function OnGUI() {
 		var controller : MessageController = message.GetComponent(MessageController);
 		controller.setNodePath(order);
 	}
+	
+	// label for client
+	var cliPos = Camera.main.WorldToScreenPoint(cli.transform.position);
+	GUI.Label(Rect(cliPos.x - 15, cliPos.y + 10, 70, 50), "Client"); 
+	// label for recip
+	var recipPos = Camera.main.WorldToScreenPoint(recip.transform.position);
+	GUI.Label(Rect(recipPos.x - 25, recipPos.y + 10, 70, 50), "Recipient");
+	// legend for nodes
+	var styleGuard = new GUIStyle();
+	styleGuard.normal.textColor = Color.blue;
+	GUI.Label(Rect(50, 20, 100, 30), "Guard Nodes", styleGuard);
+	GUI.Label(Rect(50, 30, 150, 30), "Nodes (routers)");
 }
 
 function SetTimer () {
