@@ -248,15 +248,15 @@ function OnGUI() {
 	
 	// label for client
 	var cliPos = Camera.main.WorldToScreenPoint(cli.transform.position);
-	GUI.Label(Rect(cliPos.x - 15, cliPos.y + 10, 70, 50), "Client"); 
+	GUI.Label(Rect(cliPos.x - 15, cliPos.y + 30, 70, 50), "Client"); 
 	// label for recip
 	var recipPos = Camera.main.WorldToScreenPoint(recip.transform.position);
-	GUI.Label(Rect(recipPos.x - 25, recipPos.y + 10, 70, 50), "Recipient");
+	GUI.Label(Rect(recipPos.x - 25, recipPos.y + 30, 70, 50), "Recipient");
 	// legend for nodes
 	var styleGuard = new GUIStyle();
 	styleGuard.normal.textColor = Color.blue;
-	GUI.Label(Rect(50, 20, 100, 30), "Guard Nodes", styleGuard);
-	GUI.Label(Rect(50, 30, 150, 30), "Nodes (routers)");
+	GUI.Label(Rect(100, 20, 100, 30), "Guard Nodes", styleGuard);
+	GUI.Label(Rect(100, 35, 150, 30), "Nodes (routers)");
 }
 
 function SetTimer () {
@@ -264,5 +264,7 @@ function SetTimer () {
 	var guiTime = Time.time - startTime;
 	var seconds : int = guiTime % 60;
 	textTime = String.Format(":{0:00}", seconds);
-	GUI.Label(Rect(Screen.width - 147 , Screen.height - 40,80,40), textTime);
+	var styleTimer = new GUIStyle();
+	styleTimer.normal.textColor = Color.gray;
+	GUI.Label(Rect(Screen.width - 130 , Screen.height - 35,80,40), textTime, styleTimer);
 }
