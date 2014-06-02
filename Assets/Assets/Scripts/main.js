@@ -278,5 +278,7 @@ function SetTimer () {
 	var guiTime = Time.time - startTime;
 	var seconds : int = guiTime % 60;
 	textTime = String.Format(":{0:00}", seconds);
-	GUI.Label(Rect(Screen.width - 147 , Screen.height - 40,80,40), textTime);
+	var styleTimer = new GUIStyle();
+	styleTimer.normal.textColor = Color.gray;
+	GUI.Label(Rect(Screen.width - 130 , Screen.height - 35,80,40), textTime, styleTimer);
 }
