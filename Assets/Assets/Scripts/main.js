@@ -6,6 +6,7 @@ var capsule : GameObject;
 
 // selecting guard nodes
 var guardCount : int = 5;
+var activeGuards : int = 3;
 var ncount : int = 11;
 // path
 var hops : int = 5;
@@ -23,6 +24,7 @@ private var currDelayTime :int;
 
 private var ghash = new Hashtable();
 private var nhash = new Hashtable();
+private var guardPool = new Hashtable(); // all guard entries
 private var order = new Array();
 private var colors : Color[];
 
@@ -60,6 +62,12 @@ function Awake() {
 		colors[i] = new Color(1.0, (1.0 - 1.0/c), (1.0 - 1.0/c), 1);
 		c++;
 	}
+
+	// select flagged guard nodes (default nodes 0-4)
+	for (var g = 0; g < guardCount; g++) {
+		guardPool[g] = g;
+	}
+	
 	// start timer
 	startTime = Time.time;
 	
@@ -81,7 +89,7 @@ function Start () {
 		);
 		clone.name = "Node"+i;
 	}
-	// select guard nodes
+	// select client's guard nodes
 	SelectGuards(guardCount);
 	// create path
 	SelectPath(hops);
@@ -94,7 +102,7 @@ function FixedUpdate () {
 	var controller : MessageController = message.GetComponent(MessageController);
 	switch(messageState) {
 		case MessageStates.NODE:
-			Debug.Log("Next " + next + " " + order.length + " " + arrived);
+			//Debug.Log("Next " + next + " " + order.length + " " + arrived);
 			var endpoint : GameObject = GameObject.Find("Node"+order[next]);
 			var endPos : Vector3 = endpoint.transform.position;
 			if(arrived) {
@@ -151,21 +159,22 @@ function FixedUpdate () {
 					tcount = 0;
 				} else {
 					SetNewPath();
+					Debug.Log("Node Path " + order.toString());
 				}
 				messageState = MessageStates.NODE;
 			}
 			break;
 	}
 	message.transform.position = message.transform.position  + (message.transform.forward * messageSpeed * Time.deltaTime);
-	Debug.Log("Next " + next+ " Message State " + messageState);
+	//Debug.Log("Next " + next+ " Message State " + messageState);
 }
 
 function SelectGuards (guardCount : int): void {
 	var count = 0;
 	var first = true; // assign guard node as first node in path always
 	
-	while (count < guardCount) {
-		var selected = Random.Range(0, ncount-1);
+	while (count < activeGuards) {
+		var selected = Random.Range(0, guardCount-1);
 		if (ghash[selected] != null) {
 			continue;
 		} else {
@@ -177,44 +186,53 @@ function SelectGuards (guardCount : int): void {
 			count++;
 		}
 	}
-	//Debug.Log("Guard node count: " + ghash.Count);	
-	for (item in ghash.Keys) {
-		var guard = GameObject.Find("Node"+item);
-		guard.renderer.material.color = Color.cyan;
+	// make all guards cyan
+	for (item in guardPool.Keys) {
+		var passiveGuard = GameObject.Find("Node"+item);
+		passiveGuard.renderer.material.color = Color.cyan;
 	}
-}
-
-function SelectPath (hops : int): void {
-	// guard node is first, need to select ncount-1 more nodes in path
-	for (var i:int = 0; i < minPath; i++) {
-		var n = Random.Range(0, ncount);
-		while (ghash[n] != null || nhash[n] != null)
-			n = Random.Range(0, ncount);
-		order.push(n);
-		nhash[n] = n;
+	// make active guards yellow
+	for (item in ghash.Keys) {
+		var activeGuard = GameObject.Find("Node"+item);
+		activeGuard.renderer.material.color = Color.yellow;
 	}
 }
 
 function SetNewGuardPath () {
+	// reset params
 	arrived = false;
 	next = 0;
 	hops = minPath;
+	
 	for (item in ghash.Keys) {
 		var guard = GameObject.Find("Node"+item);
-		guard.renderer.material.color = Color.white;
+		guard.renderer.material.color = Color.cyan;
 	}
 	ghash.Clear();
 	nhash.Clear();
 	order.Clear();
 }
 
+function SelectPath (hops : int): void {
+	// guard node is first, need to select ncount-1 more nodes in path
+	for (var i:int = 0; i < minPath; i++) {
+		var n = Random.Range(0, ncount-1);
+		while (ghash[n] != null || nhash[n] != null)
+			n = Random.Range(0, ncount-1);
+		order.push(n);
+		nhash[n] = n;
+	}
+}
+
 function SetNewPath () {
+	// reset params
 	arrived = false;
 	next = 0;
 	hops = minPath;
 	nhash.Clear();
-	for (var i:int = 1; i < order.length; i++) {
-		order.RemoveAt(i);
+	var o = order.length;
+	for (var i:int = 1; i < o; i++) {
+		order.RemoveAt(1);
 	}
 	SelectPath(hops);
 }
@@ -237,6 +255,7 @@ function OnGUI() {
 		SetNewGuardPath();
 		SelectGuards(guardCount);
 		SelectPath(hops);
+		
 		// reset position of message
 		message.transform.position = Vector3(cli.transform.position.x, cli.transform.position.y, cli.transform.position.z);
 		Debug.Log("Node Path " + order.toString());
@@ -259,7 +278,7 @@ function OnGUI() {
 	styleTitle.fontSize = 16;
 	styleTitle.fontStyle = FontStyle.Bold;
 	styleTitle.normal.textColor = Color.white;
-	GUI.Label(Rect(10, 10, 200, 30), "TOR Onion Routing and Guard Entry Nodes", styleTitle);
+	GUI.Label(Rect(10, 10, 200, 30), "TOR Onion Routing and Guard Entry", styleTitle);
 	GUI.Label(Rect(10, 30, 220, 30), "By Anthony Wang & Sonny Lin");
 	
 	// legend for nodes
@@ -270,7 +289,7 @@ function OnGUI() {
 	styleActive.normal.textColor = Color.yellow;
 	GUI.Label(Rect(10, 75, 150, 30), "Existing Guard Nodes", stylePassive);
 	GUI.Label(Rect(10, 90, 150, 30), "Client's Guard Nodes", styleActive);
-	GUI.Label(Rect(10, 100, 150, 30), "Regulard Nodes");
+	GUI.Label(Rect(10, 100, 150, 30), "Regular Nodes");
 }
 
 function SetTimer () {
