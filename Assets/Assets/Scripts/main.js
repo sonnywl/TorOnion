@@ -5,7 +5,7 @@ var client : GameObject;
 var capsule : GameObject;
 
 // selecting guard nodes
-var guardCount : int = 3;
+var guardCount : int = 5;
 var ncount : int = 11;
 // path
 var hops : int = 5;
@@ -41,9 +41,9 @@ function Awake() {
 	camPos = this.camera.transform.position;
 	// instantiate client and recipient
 	cli = Instantiate(client, Vector3(camPos.x - 10f, 3, camPos.z), Quaternion.identity);
-	cli.renderer.material.color = Color.cyan;
+	cli.renderer.material.color = Color.blue;
 	recip = Instantiate(client, Vector3(camPos.x + 10f, 3, camPos.z), Quaternion.identity);
-	recip.renderer.material.color = Color.green;
+	recip.renderer.material.color = Color.red;
 	// instantiate message to clients position
 	message = Instantiate (
 		capsule, 
@@ -180,7 +180,7 @@ function SelectGuards (guardCount : int): void {
 	//Debug.Log("Guard node count: " + ghash.Count);	
 	for (item in ghash.Keys) {
 		var guard = GameObject.Find("Node"+item);
-		guard.renderer.material.color = Color.blue;
+		guard.renderer.material.color = Color.cyan;
 	}
 }
 
@@ -249,14 +249,28 @@ function OnGUI() {
 	// label for client
 	var cliPos = Camera.main.WorldToScreenPoint(cli.transform.position);
 	GUI.Label(Rect(cliPos.x - 15, cliPos.y + 10, 70, 50), "Client"); 
+	
 	// label for recip
 	var recipPos = Camera.main.WorldToScreenPoint(recip.transform.position);
 	GUI.Label(Rect(recipPos.x - 25, recipPos.y + 10, 70, 50), "Recipient");
+	
+	// title and names
+	var styleTitle = new GUIStyle();
+	styleTitle.fontSize = 16;
+	styleTitle.fontStyle = FontStyle.Bold;
+	styleTitle.normal.textColor = Color.white;
+	GUI.Label(Rect(10, 10, 200, 30), "TOR Onion Routing and Guard Entry Nodes", styleTitle);
+	GUI.Label(Rect(10, 30, 220, 30), "By Anthony Wang & Sonny Lin");
+	
 	// legend for nodes
-	var styleGuard = new GUIStyle();
-	styleGuard.normal.textColor = Color.blue;
-	GUI.Label(Rect(50, 20, 100, 30), "Guard Nodes", styleGuard);
-	GUI.Label(Rect(50, 30, 150, 30), "Nodes (routers)");
+	GUI.Label(Rect(10, 55, 150, 30), "Legend:");
+	var stylePassive = new GUIStyle();
+	stylePassive.normal.textColor = Color.cyan;
+	var styleActive = new GUIStyle();
+	styleActive.normal.textColor = Color.yellow;
+	GUI.Label(Rect(10, 75, 150, 30), "Existing Guard Nodes", stylePassive);
+	GUI.Label(Rect(10, 90, 150, 30), "Client's Guard Nodes", styleActive);
+	GUI.Label(Rect(10, 100, 150, 30), "Regulard Nodes");
 }
 
 function SetTimer () {
