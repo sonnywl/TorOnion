@@ -8,14 +8,10 @@ function Awake() {
 }
 
 function OnTriggerEnter(collider:Collider){
-	if(nodePath != null){
-		for(var i:int = 0; i < nodePath.length; i++) {
-			if(!collisionTarget.Equals(nodePath[i])) {
-				collisionTarget = collider.name;
-			}
-		}
-	} else {
-		if(!collisionTarget.Equals(collider.name)) {
+	for(var i:int = 0; i < nodePath.length; i++) {
+		if(collider.name.Equals("Node"+nodePath[i])) {
+			collisionTarget = collider.name;
+		} else if(!collider.name.Contains("Node")) {
 			collisionTarget = collider.name;
 		}
 	}

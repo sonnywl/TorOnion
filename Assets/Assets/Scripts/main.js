@@ -7,20 +7,23 @@ var capsule : GameObject;
 // selecting guard nodes
 var guardCount : int = 5;
 var activeGuards : int = 3;
-var ncount : int = 11;
+private var nodeCount : int = 11;
 // path
-var hops : int = 5;
-var minPath : int = 5;
-private var next : int = 0;
+
+private var minPath : int = 3;
+private var hops : int = minPath;
+private var next : int = 0; // Represents the next node in the array to go to
+private var currentNode : int; // Tracking the Next Node in Order Array
 
 // Timekeeping
-var tcount : int;
-var startTime : float; // not sure if keeping stopwatch yet
-var textTime : String;
-var seconds : int;
-var delayTime:int= 3;
-var messageSpeed:int = 6;
-private var currDelayTime :int;
+// None private variables are defined in Inspector Console
+var delayTime:float; 
+var messageSpeed:int;
+private var tcount : int;
+private var startTime : float; // not sure if keeping stopwatch yet
+private var textTime : String;
+private var seconds : int;
+private var currDelayTime :float;
 
 private var ghash = new Hashtable();
 private var nhash = new Hashtable();
@@ -32,14 +35,14 @@ private var camPos	: Vector3;
 private var cli 	: GameObject;
 private var recip	: GameObject;
 private var message	: GameObject;
-private var arrived	: boolean;
-private var rewind : boolean;
+private var controller : MessageController;
 
-private enum MessageStates {CLIENT, NODE, RECIPENT, RESTART};
+private var arrivedRecipent	: boolean;
+private enum MessageStates {CLIENT, NODE, CONNECT, RETURN, RECIPENT, RESTART};
 private var messageState : MessageStates;
 
 function Awake() {
-	arrived = false;
+	arrivedRecipent = false;
 	camPos = this.camera.transform.position;
 	// instantiate client and recipient
 	cli = Instantiate(client, Vector3(camPos.x - 10f, 3, camPos.z), Quaternion.identity);
@@ -55,6 +58,7 @@ function Awake() {
 	cli.name = "Client";
 	recip.name = "Recip";
 	message.name = "Message";
+	controller = message.GetComponent(MessageController);
 	// set colors
 	colors = new Color[hops];
 	var c = 1;
@@ -70,14 +74,12 @@ function Awake() {
 	
 	// start timer
 	startTime = Time.time;
-	
 	currDelayTime = delayTime;
-	messageState = MessageStates.NODE;
 }
 
 function Start () {
 	// instantiate tor nodes
-	for (var i:int = 0; i < ncount; i++) {
+	for (var i:int = 0; i < nodeCount; i++) {
 		var clone:GameObject = Instantiate(
 			node,  
 			Vector3 (
@@ -92,81 +94,131 @@ function Start () {
 	// select client's guard nodes
 	SelectGuards(guardCount);
 	// create path
-	SelectPath(hops);
-	var controller : MessageController = message.GetComponent(MessageController);
-	controller.setNodePath(order);
-	Debug.Log("Node Path " + order.toString());
+	SelectPath();
+	currentNode = next;
+	messageState = MessageStates.CONNECT;
 }
 
 function FixedUpdate () {
-	var controller : MessageController = message.GetComponent(MessageController);
+	var controller : MessageController = message.GetComponent(MessageController);	
+	var endpoint : GameObject;
+
 	switch(messageState) {
-		case MessageStates.NODE:
-			//Debug.Log("Next " + next + " " + order.length + " " + arrived);
-			var endpoint : GameObject = GameObject.Find("Node"+order[next]);
-			var endPos : Vector3 = endpoint.transform.position;
-			if(arrived) {
-				if (controller.getCollisionTarget().Equals(endpoint.name)) {
-					if(next >= 1) {
-						message.renderer.material.color = colors[next-1];
+		case MessageStates.NODE: // Runs all the way to server
+			if(next < order.length) {
+				endpoint = GameObject.Find("Node"+order[next]);
+			} else {
+				endpoint = GameObject.Find("Node"+order[order.length-1]);
+			}
+			// Go to Server
+			if (controller.getCollisionTarget().Equals(endpoint.name)) {
+				next++;
+				if(next < order.length) {
+					Debug.Log(colors.Length+ " next "+ next + " "+order.ToString()+ " " +endpoint.name);
+					message.renderer.material.color = colors[next];
+				} else {
+					messageState = MessageStates.RECIPENT;
+					message.renderer.material.color = Color.white;
+					break;
+				}
+			} 				
+			message.transform.LookAt(endpoint.transform);
+			forward();
+			break;
+		case MessageStates.CONNECT:
+			if(next < 0) {
+				next = 0;
+			}
+			if(next < order.length) {
+				endpoint = GameObject.Find("Node"+order[next]);
+			} else {
+				endpoint = GameObject.Find("Node"+order[order.length-1]);
+			}
+			if(controller.getCollisionTarget().Equals(endpoint.name)) {
+				if(next == currentNode) {
+					if(currentNode==order.length) {
+						arrivedRecipent = false;
+						messageState = MessageStates.RECIPENT;
+						tcount++;
+					} else {
+						currentNode++;
+						next--;
+						messageState = MessageStates.RETURN;
 					}
-					next--;
-					if (next < 0) {
-						messageState = MessageStates.CLIENT;
+				} else {
+					next++;
+					if(next > order.length - 1) { // RECIPENT
 						message.renderer.material.color = Color.white;
+					} else {
+						message.renderer.material.color = colors[next-1];
 					}
 				}
+			}
+			message.transform.LookAt(endpoint.transform);
+			forward();
+			break;
+		case MessageStates.RETURN: // Runs all the way back to client
+			if(next >= 0 ) {
+				endpoint = GameObject.Find("Node"+order[next]);
 			} else {
-				if (controller.getCollisionTarget().Equals(endpoint.name)) {
-					next++;
-					hops--;
-					if(next != 0) {
-						message.renderer.material.color = colors[next-1];
-					} else if (next == 0) {
-						message.renderer.material.color = Color.white;
-					}
-				} 
-				if(hops == 0 || next >= order.length - 1) {
-					messageState = MessageStates.RECIPENT;
+				endpoint = GameObject.Find(cli.name);
+			}
+			if (controller.getCollisionTarget().Equals(endpoint.name)) {
+				next--;
+				if(next >= 0) {
+					message.renderer.material.color = colors[next];
+				}
+				if (next < 0) {
+					messageState = MessageStates.CLIENT;
 					message.renderer.material.color = Color.white;
 				}
 			}
 			message.transform.LookAt(endpoint.transform);
+			forward();
 			break;
 		case MessageStates.CLIENT:
 			message.transform.LookAt(cli.transform);
-			messageState = MessageStates.RESTART;
+			forward();
+			if(controller.getCollisionTarget().Equals(cli.name)) {
+				if(tcount >= 3) {
+					messageState = MessageStates.RESTART;
+					arrivedRecipent = false;
+				} else {
+					messageState = MessageStates.CONNECT;
+				}
+			}
 			break;
 		case MessageStates.RECIPENT:
 			message.transform.LookAt(recip.transform);
+			if(!arrivedRecipent) {
+				forward();
+			}
 			if (controller.getCollisionTarget().Equals(recip.name)) {
+				arrivedRecipent = true;
 				if (DelayMessage()) {
-					messageState = MessageStates.NODE;
+					messageState = MessageStates.RETURN;
 					next--;
-					arrived = true;
 				}
 			}
 			break;
 		case MessageStates.RESTART:
 			if (controller.getCollisionTarget().Equals("Client")) {
-				tcount++;
 				if (tcount >= 3) {
 					SetNewGuardPath();
 					SelectGuards(guardCount);
-					SelectPath(hops);
+					SetNewPath();
 					Debug.Log("Node Path " + order.toString());
 					startTime = Time.time;
 					tcount = 0;
-				} else {
-					SetNewPath();
-					Debug.Log("Node Path " + order.toString());
 				}
-				messageState = MessageStates.NODE;
+				messageState = MessageStates.CONNECT;
 			}
 			break;
 	}
+}
+
+function forward() {
 	message.transform.position = message.transform.position  + (message.transform.forward * messageSpeed * Time.deltaTime);
-	//Debug.Log("Next " + next+ " Message State " + messageState);
 }
 
 function SelectGuards (guardCount : int): void {
@@ -200,10 +252,11 @@ function SelectGuards (guardCount : int): void {
 
 function SetNewGuardPath () {
 	// reset params
-	arrived = false;
+	arrivedRecipent = false;
 	next = 0;
 	hops = minPath;
-	
+	currentNode = next++;
+
 	for (item in ghash.Keys) {
 		var guard = GameObject.Find("Node"+item);
 		guard.renderer.material.color = Color.cyan;
@@ -213,28 +266,31 @@ function SetNewGuardPath () {
 	order.Clear();
 }
 
-function SelectPath (hops : int): void {
-	// guard node is first, need to select ncount-1 more nodes in path
-	for (var i:int = 0; i < minPath; i++) {
-		var n = Random.Range(0, ncount-1);
+function SelectPath (): void {
+	// guard node is first, need to select nodeCount-1 more nodes in path
+	for (var i:int = 0; i < minPath-1; i++) {
+		var n = Random.Range(0, nodeCount-1);
 		while (ghash[n] != null || nhash[n] != null)
-			n = Random.Range(0, ncount-1);
+			n = Random.Range(0, nodeCount-1);
 		order.push(n);
 		nhash[n] = n;
 	}
+	Debug.Log(minPath + " " +	order.ToString());
+	controller.setNodePath(order);
 }
 
 function SetNewPath () {
 	// reset params
-	arrived = false;
+	arrivedRecipent = false;
 	next = 0;
 	hops = minPath;
 	nhash.Clear();
 	var o = order.length;
+	
 	for (var i:int = 1; i < o; i++) {
 		order.RemoveAt(1);
 	}
-	SelectPath(hops);
+	SelectPath();
 }
 
 function DelayMessage(): boolean {
@@ -248,13 +304,12 @@ function DelayMessage(): boolean {
 
 function OnGUI() {
 	SetTimer();
-	
 	// play again button
 	if (GUI.Button(Rect(Screen.width - 100,Screen.height - 50,80,40),"Play Again")) {
 		// select new guard nodes and new path
 		SetNewGuardPath();
 		SelectGuards(guardCount);
-		SelectPath(hops);
+		SelectPath();
 		
 		// reset position of message
 		message.transform.position = Vector3(cli.transform.position.x, cli.transform.position.y, cli.transform.position.z);
