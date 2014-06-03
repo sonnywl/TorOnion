@@ -53,8 +53,6 @@ function Awake() {
 	cli.renderer.material.color = Color.blue;
 	recip = Instantiate(client, Vector3(camPos.x + 10f, 3, camPos.z), Quaternion.identity);
 	recip.renderer.material.color = Color.red;
-	cli.AddComponent(LineRenderer);
-	recip.AddComponent(LineRenderer);
 	// instantiate message to clients position
 	message = Instantiate (
 		capsule, 
@@ -96,7 +94,6 @@ function Start () {
 			Quaternion.identity
 		);
 		clone.name = "Node"+i;
-		clone.AddComponent(LineRenderer);
 	}
 	// select client's guard nodes
 	SelectGuards(guardCount);
@@ -236,15 +233,31 @@ function FixedUpdate () {
 function forward() {
 	message.transform.position = message.transform.position  + (message.transform.forward * messageSpeed * Time.deltaTime);
 }
+//var lineMaterial : Material;
+//function CreateLineMaterial:void()
+//{
+//	if( !lineMaterial )
+//	{
+//		lineMaterial = new Material( "Shader \"Lines/Colored Blended\" {" +
+//		"SubShader { Pass { " +
+//		" Blend SrcAlpha OneMinusSrcAlpha " +
+//		" ZWrite Off Cull Off Fog { Mode Off } " +
+//		" BindChannels {" +
+//		" Bind \"vertex\", vertex Bind \"color\", color }" +
+//		"} } }" );
+//		lineMaterial.hideFlags = HideFlags.HideAndDontSave;
+//		lineMaterial.shader.hideFlags = HideFlags.HideAndDontSave;
+//	}
+//}
 
 function renderLine(start : GameObject, end : GameObject) {
 	//var end = GameObject.Find("Node"+endNode);
 	var line : LineRenderer = end.GetComponent(LineRenderer);
-	line.material = new Material (Shader.Find("Particles/Additive"));
 	line.SetColors(c2, c1);
 	line.SetWidth(0.1f, 0.1f);
 	line.SetPosition(0, end.transform.position);
 	line.SetPosition(1, start.transform.position);
+	line.SetVertexCount(2);
 }
 
 function clearRenderedLines() {
@@ -355,6 +368,7 @@ function OnGUI() {
 		SetNewPath();
 		// reset position of message
 		message.transform.position = Vector3(cli.transform.position.x, cli.transform.position.y, cli.transform.position.z);
+		message.renderer.material.color = Color.white;
 		Debug.Log("Node Path " + order.toString());
 		startTime = Time.time;
 		messageState = MessageStates.CONNECT;
