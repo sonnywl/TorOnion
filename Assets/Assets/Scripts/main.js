@@ -41,6 +41,10 @@ private var arrivedRecipent	: boolean;
 private enum MessageStates {CLIENT, NODE, CONNECT, RETURN, RECIPENT, RESTART};
 private var messageState : MessageStates;
 
+// line color
+private var c1 : Color = Color.white;
+private var c2 : Color = Color(1,1,1,0);
+
 function Awake() {
 	arrivedRecipent = false;
 	camPos = this.camera.transform.position;
@@ -49,6 +53,8 @@ function Awake() {
 	cli.renderer.material.color = Color.blue;
 	recip = Instantiate(client, Vector3(camPos.x + 10f, 3, camPos.z), Quaternion.identity);
 	recip.renderer.material.color = Color.red;
+	cli.AddComponent(LineRenderer);
+	recip.AddComponent(LineRenderer);
 	// instantiate message to clients position
 	message = Instantiate (
 		capsule, 
@@ -90,6 +96,7 @@ function Start () {
 			Quaternion.identity
 		);
 		clone.name = "Node"+i;
+		clone.AddComponent(LineRenderer);
 	}
 	// select client's guard nodes
 	SelectGuards(guardCount);
@@ -134,7 +141,14 @@ function FixedUpdate () {
 			} else {
 				endpoint = GameObject.Find("Node"+order[order.length-1]);
 			}
+			
 			if(controller.getCollisionTarget().Equals(endpoint.name)) {
+				if (next == 0) {
+					renderLine(endpoint, cli);
+				} else if (next < order.length && next > 0) {
+					//Debug.Log("CurrentNode: " +endpoint.name + " | NextNode: Node"+ order[next]);
+					renderLine(endpoint, GameObject.Find("Node"+order[next-1]));
+				}
 				if(next == currentNode) {
 					if(currentNode==order.length) {
 						arrivedRecipent = false;
@@ -194,6 +208,7 @@ function FixedUpdate () {
 				forward();
 			}
 			if (controller.getCollisionTarget().Equals(recip.name)) {
+				renderLine(recip, GameObject.Find("Node"+order[order.length-1]));
 				arrivedRecipent = true;
 				if (DelayMessage()) {
 					messageState = MessageStates.RETURN;
@@ -204,6 +219,7 @@ function FixedUpdate () {
 		case MessageStates.RESTART:
 			if (controller.getCollisionTarget().Equals("Client")) {
 				if (tcount >= 3) {
+					clearRenderedLines();
 					SetNewGuardPath();
 					SelectGuards(guardCount);
 					SetNewPath();
@@ -219,6 +235,31 @@ function FixedUpdate () {
 
 function forward() {
 	message.transform.position = message.transform.position  + (message.transform.forward * messageSpeed * Time.deltaTime);
+}
+
+function renderLine(start : GameObject, end : GameObject) {
+	//var end = GameObject.Find("Node"+endNode);
+	var line : LineRenderer = end.GetComponent(LineRenderer);
+	line.material = new Material (Shader.Find("Particles/Additive"));
+	line.SetColors(c1, c2);
+	line.SetWidth(0.1f, 0.1f);
+	line.SetPosition(0, end.transform.position);
+	line.SetPosition(1, start.transform.position);
+}
+
+function clearRenderedLines() {
+	for (var n = 0; n < nodeCount; n++) {
+		var node : GameObject = GameObject.Find("Node"+n);
+		var lr : LineRenderer = node.GetComponent(LineRenderer);
+		lr.SetPosition(0, node.transform.position);
+		lr.SetPosition(1, node.transform.position);
+	}
+	var lrcli : LineRenderer = cli.GetComponent(LineRenderer);
+	lrcli.SetPosition(0, cli.transform.position);
+	lrcli.SetPosition(1, cli.transform.position);
+	var lrrecip : LineRenderer = cli.GetComponent(LineRenderer);
+	lrrecip.SetPosition(0, recip.transform.position);
+	lrrecip.SetPosition(1, recip.transform.position);
 }
 
 function SelectGuards (guardCount : int): void {
@@ -307,6 +348,7 @@ function OnGUI() {
 	// play again button
 	if (GUI.Button(Rect(Screen.width - 100,Screen.height - 50,80,40),"Play Again")) {
 		// select new guard nodes and new path
+		clearRenderedLines();
 		SetNewGuardPath();
 		SelectGuards(guardCount);
 		SelectPath();
