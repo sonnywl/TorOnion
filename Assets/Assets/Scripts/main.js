@@ -310,12 +310,12 @@ function OnGUI() {
 		SetNewGuardPath();
 		SelectGuards(guardCount);
 		SelectPath();
-		
+		SetNewPath();
 		// reset position of message
 		message.transform.position = Vector3(cli.transform.position.x, cli.transform.position.y, cli.transform.position.z);
 		Debug.Log("Node Path " + order.toString());
 		startTime = Time.time;
-		messageState = MessageStates.NODE;
+		messageState = MessageStates.CONNECT;
 		var controller : MessageController = message.GetComponent(MessageController);
 		controller.setNodePath(order);
 	}
