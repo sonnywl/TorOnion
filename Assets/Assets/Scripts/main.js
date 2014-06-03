@@ -241,7 +241,7 @@ function renderLine(start : GameObject, end : GameObject) {
 	//var end = GameObject.Find("Node"+endNode);
 	var line : LineRenderer = end.GetComponent(LineRenderer);
 	line.material = new Material (Shader.Find("Particles/Additive"));
-	line.SetColors(c1, c2);
+	line.SetColors(c2, c1);
 	line.SetWidth(0.1f, 0.1f);
 	line.SetPosition(0, end.transform.position);
 	line.SetPosition(1, start.transform.position);
